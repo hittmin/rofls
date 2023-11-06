@@ -45,7 +45,7 @@ def main():
                 time.sleep(0.5)
                 pyautogui.mouseDown(button='left')
                 pyautogui.mouseUp(button='left')
-                last_click_time = time.time()  # Оновлюємо час останнього кліку
+                last_click_time = time.time()
 
         prev_screenshot = screenshot
 
