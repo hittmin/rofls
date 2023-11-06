@@ -1,0 +1,53 @@
+import cv2
+import numpy as np
+import pyautogui
+import time
+
+def detect_red_pixel_movement(screenshot, prev_screenshot, threshold):
+    hsv_screenshot = cv2.cvtColor(screenshot, cv2.COLOR_BGR2HSV)
+    hsv_prev_screenshot = cv2.cvtColor(prev_screenshot, cv2.COLOR_BGR2HSV)
+
+    lower_red = np.array([0, 100, 100])
+    upper_red = np.array([10, 255, 255])
+    lower_red2 = np.array([160, 100, 100])
+    upper_red2 = np.array([180, 255, 255])
+
+    mask1 = cv2.inRange(hsv_screenshot, lower_red, upper_red)
+    mask2 = cv2.inRange(hsv_screenshot, lower_red2, upper_red2)
+    red_mask = cv2.bitwise_or(mask1, mask2)
+
+    diff = cv2.absdiff(prev_screenshot, screenshot)
+    red_pixel_movement = cv2.bitwise_and(diff, diff, mask=red_mask)
+
+    non_zero_pixels = np.count_nonzero(red_pixel_movement)
+
+    return non_zero_pixels > threshold
+
+def main():
+    prev_screenshot = None
+    threshold = 30
+    last_click_time = time.time() - 2
+
+    while True:
+        x, y = pyautogui.position()
+        screenshot = pyautogui.screenshot(region=(x - 50, y - 50, 100, 100))
+        screenshot = np.array(screenshot)
+        screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+       
+        alpha = 1
+        beta = 10
+        screenshot = cv2.convertScaleAbs(screenshot, alpha=alpha, beta=beta)
+
+        if prev_screenshot is not None and time.time() - last_click_time >= 2:
+            if detect_red_pixel_movement(screenshot, prev_screenshot, threshold):
+                pyautogui.mouseDown(button='left')
+                pyautogui.mouseUp(button='left')
+                time.sleep(0.5)
+                pyautogui.mouseDown(button='left')
+                pyautogui.mouseUp(button='left')
+                last_click_time = time.time()  # Оновлюємо час останнього кліку
+
+        prev_screenshot = screenshot
+
+if __name__ == "__main__":
+    main()
